@@ -35,9 +35,9 @@ colorAdminApp.controller('flightTrackingController', function ($scope, $interval
             pagingType: "full_numbers",
             buttons: [
                 // { extend: 'copy', className: 'btn-sm'},
-                { extend: 'csv', className: 'btn-sm', exportURL: '/api/flight/tracking/export/csv' }
+                { extend: 'csv', className: 'btn-sm', exportURL: '/api/flight/tracking/export/csv' },
                 // { extend: 'pdf', className: 'btn-sm'},
-                // { extend: 'colvis', className: 'btn-sm' },
+                { extend: 'colvis', className: 'btn-sm' }
             ],
             processing: true,
             serverSide: true,

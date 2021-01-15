@@ -545,8 +545,8 @@ exports.vuscreen_events_index = function (req, res) {
 exports.vuscreen_events_export_csv = function (req, res) {
   // var fields = ["journey_id", "vehicle_no", "reg_id", "user", "event", "model", "view_date", "view_time", "sync_date", "sync_time", "latitude", "longitude", "sync_latitude", "sync_longitude", "sync_type"];
   // var fieldversions = ["journey_id", "vehicle_no", "reg_id", "user", "event", "model", "view_date", "view_time", "sync_date", "sync_time", "latitude", "longitude", "sync_latitude", "sync_longitude", "sync_type"];
-  var fields = ["vehicle_no", "source", "destination", "sync_date", "view_date", "event", "journey_id", "unique_mac_address", "sync_time", "view_time", "battery", "userConnected", "latitude", "longitude", "sync_latitude", "sync_longitude", "sync_type", "reg_id", "model"];
-  var fieldversions = ["vehicle_no", "source", "destination", "sync_date", "view_date", "event", "journey_id", "unique_mac_address", "sync_time", "view_time", "battery", "userConnected", "latitude", "longitude", "sync_latitude", "sync_longitude", "sync_type", "reg_id", "model"];
+  var fields = ["vehicle_no", "source", "destination", "sync_date", "view_date", "event", "journey_id", "sync_time", "view_time", "battery", "latitude", "longitude", "sync_latitude", "sync_longitude", "sync_type", "reg_id", "model"];
+  var fieldversions = ["vehicle_no", "source", "destination", "sync_date", "view_date", "event", "journey_id", "sync_time", "view_time", "battery", "latitude", "longitude", "sync_latitude", "sync_longitude", "sync_type", "reg_id", "model"];
 
   var name = 'events_' + (moment(new Date()).format('YYYY-MM-DD')).toString()
   res.setHeader('Content-Type', 'text/csv');
