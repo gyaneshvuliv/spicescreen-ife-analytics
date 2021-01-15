@@ -278,9 +278,14 @@ colorAdminApp.controller('eventsLogsController', function ($scope, $rootScope, $
                         return moment(data).format('YYYY-MM-DD, HH:mm:ss');//new Date(data);
                     }
                 },
-                { data: "event", searchBy: true },
+                {
+                    data: "event",
+                    render: function (data) {
+                        return data.split('%')[0] + '%'
+                    }
+                },
+                // { data: "event", searchBy: true },
                 { data: "journey_id" },
-                { data: "unique_mac_address" },
                 { data: "reg_id", visible: false, searchBy: true },
                 { data: "device_id", visible: false, searchBy: true },
                 { data: "user", visible: false, searchBy: true },
