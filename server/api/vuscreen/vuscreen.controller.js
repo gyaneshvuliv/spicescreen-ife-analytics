@@ -466,10 +466,10 @@ var vuscreen_getAllEventsData_Pagination = function (req, cb) {
   if (req.query.reg_id) { filter = " AND vr.reg_id ='" + req.query.reg_id + "'" }
 
   var query = "select "
-    + " ve.reg_id,ve.session_id,ve.device_id,ve.user,ve.event,ve.model,ve.interface,ve.version,ve.view_datetime,ve.sync_datetime,vr.source,vr.destination,vr.vehicle_no"
+    + " ve.reg_id,ve.session_id,ve.device_id,ve.user,ve.event,ve.model,ve.interface,ve.version,ve.view_datetime,ve.sync_datetime,ve.source,ve.destination,vr.vehicle_no"
     + " from vuscreen_events ve LEFT JOIN vuscreen_content_package vc ON ve.view_id = vc.content_id"
     + " LEFT JOIN vuscreen_registration vr ON ve.reg_id = vr.reg_id"
-    + " where ve.partner = '" + req.user.partner_id + "' AND ve.sync_date >= '" + startDate + "' AND ve.sync_date <= '" + endDate + "'" + filter
+    + " where ve.partner = '" + req.user.partner_id + "' AND ve.sync_date >= '" + startDate + "' AND ve.sync_date <= '" + endDate + "' and vr.vehicle_no in "+ hostss + "and ve.event not like '%Download%' " + filter
     + " order by ve.sync_datetime desc"
 
   var query = "select "
