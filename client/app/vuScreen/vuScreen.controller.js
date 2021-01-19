@@ -248,7 +248,7 @@ colorAdminApp.controller('eventsLogsController', function ($scope, $rootScope, $
                 // { extend: 'copy', className: 'btn-sm'},
                 { extend: 'csv', className: 'btn-sm', exportURL: '/api/vuscreen/events/export/csv' },
                 // { extend: 'pdf', className: 'btn-sm'},
-                { extend: 'colvis', className: 'btn-sm' },
+                // { extend: 'colvis', className: 'btn-sm' },
             ],
             processing: true,
             serverSide: true,
@@ -286,16 +286,7 @@ colorAdminApp.controller('eventsLogsController', function ($scope, $rootScope, $
                 },
                 // { data: "event", searchBy: true },
                 { data: "journey_id" },
-                { data: "reg_id", visible: false, searchBy: true },
-                { data: "device_id", visible: false, searchBy: true },
-                { data: "user", visible: false, searchBy: true },
-                { data: "sync_latitude", visible: false },
-                { data: "sync_longitude", visible: false },
-                { data: "model", visible: false },
-                { data: "play_duration", visible: false },
-                { data: "sync_type", visible: false },
-                { data: "interface", visible: false, searchBy: true },
-                { data: "version", visible: false, searchBy: true }
+                
             ],
             drawCallback: function (settings) {
                 //alert( 'DataTables has redrawn the table' );

@@ -454,14 +454,15 @@ var vuscreen_getAllEventsData_Pagination = function (req, cb) {
   if (req.query.startDate) { startDate = moment(req.query.startDate).format('YYYY-MM-DD'); }
   if (req.query.endDate) { endDate = moment(req.query.endDate).format('YYYY-MM-DD'); }
   var filter = '';
-
+  var hostss=" ('1', '2', '3', '4', '5', '6', '8', '10', '11', '13', '14', '15', '17', '18', '20', '22', '23', '26', '29', '32', '33', '35', '36', '37', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', '61', '62', '63', '64', '65', '66', '67', '68', '69', '70', '71', '72', '73', '74', '75', '76', '78', '79', '81', '82', '83', '84', '85', '86', '88', '89', '90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100', '101', '102', '103', '106', '107', '108', '110', '111', '112', '113', '114', '115', '116', '117', '118', '123', '124', '125', '127', '128', '130', '132', '134', '142', '146', '148', '149', '150', '151', '152', '153', '154', '155', '156', '157', '158', '159', '160', '161', '163', '164', '169', '171', '172', '173', '174', '175', '177', '180', '181', '184', '185', '186', '188', '190', '191', '192', '193', '194', '195', '196', '197', '198', '199', '200', '201', '203', '205', '206', '207', '208', '211', '212', '213', '214', '215', '216', '217', '218', '219', '220', '221', '301', '302', '303', '304', '305', '306')"
+ 
   if (req.query.device_id) { filter = " AND ve.device_id ='" + req.query.device_id + "'" }
   if (req.query.interface) { filter = " AND ve.interface ='" + req.query.interface + "'" }
   if (req.query.version) { filter = " AND ve.version ='" + req.query.version + "'" }
   if (req.query.session_id) { filter = " AND ve.session_id ='" + req.query.session_id + "'" }
   if (req.query.user) { filter = " AND ve.user ='" + req.query.user + "'" }
   if (req.query.event) { filter = " AND ve.event ='" + req.query.event + "'" }
-  if (req.query.vehicle_no) { filter = " AND vr.vehicle_no ='" + req.query.vehicle_no + "'" }
+  // if (req.query.vehicle_no) { filter = " AND vr.vehicle_no ='" + req.query.vehicle_no + "'" }
   if (req.query.reg_id) { filter = " AND vr.reg_id ='" + req.query.reg_id + "'" }
 
   var query = "select "
@@ -489,8 +490,8 @@ var vuscreen_getAllEventsData_Pagination = function (req, cb) {
     + " DATE_FORMAT(ve.view_datetime, '%H:%i:%s') view_time,"
     + " ve.sync_date,"
     + " DATE_FORMAT(ve.sync_datetime, '%H:%i:%s') sync_time,"
-    + " vr.source,"
-    + " vr.destination,"
+    + " ve.source,"
+    + " ve.destination,"
     + " vr.vehicle_no,"
     + " ve.view_id,"
     + " ve.tracking_id,"
@@ -507,10 +508,11 @@ var vuscreen_getAllEventsData_Pagination = function (req, cb) {
     + " vuscreen_registration vr ON ve.reg_id = vr.reg_id"
     + " where"
     + " ve.partner = '" + req.user.partner_id + "'"
-    + " AND ve.sync_date >= '" + startDate + "' AND ve.sync_date <= '" + endDate + "'" + filter
+    + " AND ve.sync_date >= '" + startDate + "' AND ve.sync_date <= '" + endDate + "' and vr.vehicle_no in "+ hostss + "and ve.event not like '%Download%' "+ filter
     + " order by ve.view_datetime desc,ve.sync_datetime"
   var option = { draw: req.query.draw, start: req.query.start, length: req.query.length };
   db.pagination(query, option, function (err, doc) {
+    console.log(err);
     return cb(err, doc);
   })
 };
