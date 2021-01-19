@@ -269,8 +269,8 @@ colorAdminApp.controller('eventsLogsController', function ($scope, $rootScope, $
             }],
             columns: [
                 { data: "vehicle_no",searchBy: true },
-                { data: "source" },
-                { data: "destination" },
+                // { data: "source" },
+                // { data: "destination" },
                 { data: "sync_date" },
                 {
                     data: "view_datetime",
