@@ -313,8 +313,8 @@ colorAdminApp.controller('eventsLogsController', function ($scope, $rootScope, $
             opens: 'right',
             format: 'MM/DD/YYYY',
             separator: ' to ',
-            startDate: moment(),
-            endDate: moment(),
+            startDate: moment().subtract(1,'days'),
+            endDate: moment().subtract(1,'days'),
             minDate: '06/01/2017',
             maxDate: '12/31/2022',
             ranges: {
