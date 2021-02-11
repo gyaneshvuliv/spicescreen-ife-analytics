@@ -509,7 +509,7 @@ var vuscreen_getAllEventsData_Pagination = function (req, cb) {
     + " vuscreen_registration vr ON ve.reg_id = vr.reg_id"
     + " where"
     + " ve.partner = '" + req.user.partner_id + "'"
-    + " AND ve.sync_date >= '" + startDate + "' AND ve.sync_date <= '" + endDate + "' and vr.vehicle_no in "+ hostss + "and ve.event not like '%Download%' "+ filter
+    + " AND ve.sync_date >= '" + startDate + "' AND ve.sync_date <= '" + endDate + "'and ve.event not like '%Download%' "+ filter
     + " order by ve.view_datetime desc,ve.sync_datetime"
   var option = { draw: req.query.draw, start: req.query.start, length: req.query.length };
   db.pagination(query, option, function (err, doc) {
