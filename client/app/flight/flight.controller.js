@@ -69,7 +69,10 @@ colorAdminApp.controller('flightTrackingController', function ($scope, $interval
                 { data: "remote", searchBy: true },
                 { data: "f_type", searchBy: true } ,
                 { data: "air_craft_type", searchBy: true},
-                { data: "ftime"}
+                // { data: "ftime"}
+                { data: "departure_time"},
+                { data: "arrival_time"},
+                { data: "tail_number"}
             ],
             drawCallback: function (settings) {
                 //alert( 'DataTables has redrawn the table' );
