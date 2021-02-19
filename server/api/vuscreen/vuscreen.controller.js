@@ -13,6 +13,7 @@ var json2csv = require('json2csv');
 var fs = require('fs')
 var config = require('../../../server/config/environment');
 var request = require('request');
+var cronController = require('../cron/cron.controller');
 
 
 
@@ -568,21 +569,21 @@ exports.vuscreen_events_export_csv = function (req, res) {
 
           var sp = doc.data[i].event.split("|");
 
-          if (sp.length == 1) {
-            doc.data[i].event = sp[0];
-            doc.data[i].battery = "-";
-            doc.data[i].userConnected = "-";
-          }
-          if (sp.length == 2) {
-            doc.data[i].event = sp[0];
-            doc.data[i].battery = sp[1];
-            doc.data[i].userConnected = "-";
-          }
-          if (sp.length == 3) {
-            doc.data[i].event = sp[0];
-            doc.data[i].battery = sp[1];
-            doc.data[i].userConnected = sp[2];
-          }
+          // if (sp.length == 1) {
+          //   doc.data[i].event = sp[0];
+          //   doc.data[i].battery = "-";
+          //   doc.data[i].userConnected = "-";
+          // }
+          // if (sp.length == 2) {
+          //   doc.data[i].event = sp[0];
+          //   doc.data[i].battery = sp[1];
+          //   doc.data[i].userConnected = "-";
+          // }
+          // if (sp.length == 3) {
+          //   doc.data[i].event = sp[0];
+          //   doc.data[i].battery = sp[1];
+          //   doc.data[i].userConnected = sp[2];
+          // }
           var json = doc.data[i];
 
           var col = '';
@@ -5380,7 +5381,13 @@ exports.vuscreen_analyticsReport = function (req, cb) {
     Author : Kedar Gadre
     Date : 06/01/2021
 */
-exports.serverSessionDetails = function (req, res) {
+/*  Get server session details
+    @Authentication ----> by session key
+    @Authorization ----> Access Controll Logic
+    Author : Kedar Gadre
+    Date : 06/01/2021
+*/
+exports.serverSessionDetails_old = function (req, res) {
   var startDate, endDate;
   if (req.query.startDate) { startDate = moment(req.query.startDate).format('YYYY-MM-DD'); }
   if (req.query.endDate) { endDate = moment(req.query.endDate).format('YYYY-MM-DD'); }
@@ -5448,7 +5455,7 @@ exports.serverSessionDetails = function (req, res) {
         } catch (error) {
           console.log(error)
         }
-        
+
         if (i + 1 >= dataArray.length) {
           // return res.status(200).json(finalArr);
           setTimeout(() => {
@@ -5463,6 +5470,9 @@ exports.serverSessionDetails = function (req, res) {
   })
 }
 
+exports.serverSessionDetails = async function (req, res) {
+  return res.status(200).json(await cronController.serverSessionCron(req, true))
+}
 function diff_minutes(dt2, dt1) {
   var diff = (dt2.getTime() - dt1.getTime()) / 1000;
   diff /= 60;
@@ -5610,5 +5620,22 @@ exports.wifi_login_sync = function (req, res) {
           })
       // return res.status(200).json(doc);
     }
+  })
+};
+
+exports.get_ss = function (req, res) {
+  var startDate, endDate;
+  if (req.query.startDate) { startDate = moment(req.query.startDate).format('YYYY-MM-DD'); }
+  if (req.query.endDate) { endDate = moment(req.query.endDate).format('YYYY-MM-DD'); }
+  var query = "select "
+    + " count(distinct mac) count"
+    + " from"
+    + " vuscreen_tracker "
+    + " where menu = 'SS' AND"
+    + " sync_date>='" + startDate + "' AND sync_date<='" + endDate + "'"
+    console.log(query)
+  db.get().query(query, function (err, doc) {
+    if (err) { return handleError(res, err); }
+    return res.status(200).json(doc);
   })
 };

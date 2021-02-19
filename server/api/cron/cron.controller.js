@@ -489,126 +489,189 @@ exports.MTDCron = function () {
     Author : Kedar Gadre
     Date : 24/09/2020
 */
-exports.serverSessionCron = function () {
-  let d = new Date();
-  let d1 = d.setDate(d.getDate() - 1);
-  let d2 = d.setDate(d.getDate() - 6);
-  d1 = moment(d1).format('YYYY-MM-DD').toString();
-  d2 = moment(d2).format('YYYY-MM-DD').toString();
-  let query = "SELECT distinct (convert(ve.view_datetime,datetime)) as ts ,ve.sync_date,vr.vehicle_no as HostID,ve.event"
-    + " FROM vuscreen_events ve"
-    + " LEFT JOIN vuscreen_registration vr ON ve.device_id = vr.device_id"
-    + " WHERE ve.sync_date >= '" + d2 + "' AND ve.sync_date <= '" + d1 + "' AND ve.user = 'server'"
-    + " AND ve.event NOT IN ('start', 'download', 'stop', 'delete')"
-    + " GROUP BY ve.view_datetime, vr.vehicle_no, ve.event ORDER BY ve.sync_datetime"
-  console.log(query)
-  db.get().query(query, function (error, dataArray) {
-    if (error) {
-      console.log(error)
+exports.serverSessionCron = async function (req, flag) {
+  return new Promise(async function (resolve, reject) {
+    // the function is executed automatically when the promise is constructed
+    // after 1 second signal that the job is done with the result "done"
+    var filter = '';
+    let d1, d2;
+    if (flag) {
+      if (req.query.hostId != "undefined") { filter = " AND vr.vehicle_no ='" + req.query.hostId + "'" }
+      d2 = moment(req.query.startDate).format('YYYY-MM-DD').toString();
+      d1 = moment(req.query.endDate).format('YYYY-MM-DD').toString();
     } else {
-      let finalArr = []
-      let dataObj = {
-        sync_date: null, HostID: null, cycle: null, start_date: null, start_time: null, start_battery: null,
-        stop_date: null, stop_time: null, stop_battery: null, start_stop_duration: null, battery_consumed: null
-      }
-      let deviceMap = new Map();
-      for (let i = 0; i < dataArray.length; i++) {
-        const element = dataArray[i];
-        try {
-          let eventType = element.event.split("|")[0]
-          let batteryPer = element.event.split(":")[1].split("%")[0]
-          let wifiLogin = element.event.split("% |")[1]
-          if (dataObj.sync_date == null) {
-            if (eventType.trim() == "start") {
-              dataObj.sync_date = element.sync_date
-              dataObj.HostID = element.HostID;
-              var startDate = element.ts
-              dataObj.start_date = element.ts.split(" ")[0]
-              dataObj.start_time = element.ts.split(" ")[1]
-              dataObj.start_battery = batteryPer + "%"
-              dataObj.wifiLogin = wifiLogin
-              if (deviceMap.has(element.sync_date + '_' + element.HostID)) {
-                let value = deviceMap.get(element.sync_date + '_' + element.HostID)
-                dataObj.cycle = value + 1
-                deviceMap.set(element.sync_date + '_' + element.HostID, value + 1)
-              } else {
-                deviceMap.set(element.sync_date + '_' + element.HostID, 1)
-                dataObj.cycle = 1
-              }
-            }
-          } else {
-            if (dataObj.HostID == element.HostID) {
-              let endDate = element.ts
-              dataObj.stop_date = element.ts.split(" ")[0]
-              dataObj.stop_time = element.ts.split(" ")[1]
-              dataObj.stop_battery = batteryPer + "%"
-              dataObj.wifiLogin = wifiLogin
-              // need to cal time duration & battery consumed
-              let difference = diff_minutes(new Date(startDate), new Date(endDate))
-              dataObj.start_stop_duration = difference
-              let battery_consumed = dataObj.start_battery.replace("%", "") - dataObj.stop_battery.replace("%", "")
-              dataObj.battery_consumed = battery_consumed + "%"
-              finalArr.push(dataObj)
-              dataObj = {
-                sync_date: null, HostID: null, cycle: null, wifiLogin:null, start_date: null, start_time: null, start_battery: null,
-                stop_date: null, stop_time: null, stop_battery: null, start_stop_duration: null, battery_consumed: null
-              }
-            }
-          }
-        } catch (error) {
-          console.log(error)
-        }
-        
-      }
-      let fields = ["sync_date", "HostID", "cycle","wifiLogin", "start_date", "start_time", "start_battery", "stop_date", "stop_time", "stop_battery", "start_stop_duration", "battery_consumed"];
-      let csvDau = json2csv({ data: finalArr, fields: fields });
-      var array = []
-      array.push({ key: 'serversession', value: csvDau })
-      for (var i = 0; i < array.length; i++) {
-        fs.writeFile(config.root + '/server/api/cron/' + array[i].key + '.csv', array[i].value, function (err) {
-          if (err) {
-            throw err;
-          } else {
-            console.log('file saved');
-          }
-        });
-      }
-      let destPath = "serversession_" + moment(new Date()).format('YYYY-MM-DD') + ".csv"
-      fs.readFile(config.root + '/server/api/cron/serversession.csv', function (err, data) {
-        if (err) throw err; // Something went wrong!
-        s3Client.putObject({
-          Bucket: s3_details.bucket,
-          Key: destPath,
-          ACL: 'public-read',
-          Body: data
-        }, function (err, data) {
-          if (err) {
-            console.log(err)
-          } else {
-            console.log("success")
-            let url = "https://mobisign-bucket.s3.ap-south-1.amazonaws.com/Automated_Reports" + '/' + destPath
-            setTimeout(function () {
-              var html = "<html><head>"
-              html += "<style>"
-              html += "table {font-family: arial, sans-serif;border-collapse: collapse;width: 100%;}"
-              html += "td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}"
-              html += "tr:nth-child(even) {background-color: #dddddd;}</style></head>"
-              html += "<h4>Dear Recipients,</h4>"
-              html += "<h4>Please click below URL to open the report.</h4>"
-              html += "<h4>" + url + "</h4>"
-              html += "<br><h5>Thanks & Regards</h5><h5>Mobi Sign Pvt Ltd.</h5></html>"
-              let subject = "Last 7 Server Sessions activity"
-              var email = 'deepak.kumar@mobisign.co.in,product@mobisign.co.in,monali.monalisa@mobisign.co.in,ashyin.thakral@mobisign.co.in,kedargdr@gmail.com,vishal.garg@mobisign.co.in'
-              // var email = 'kedargdr@gmail.com,deepak.kumar@mobisign.co.in,vishal.garg@mobisign.co.in'
-              EM.dispatchEmail(email, subject, html, "serversession", function (e) {
-                console.log(e)
-              })
-            }, 10000)
-          }
-        }); 
-      });
+      let d = new Date();
+      d1 = d.setDate(d.getDate() - 1);
+      d2 = d.setDate(d.getDate() - 6);
+      d1 = moment(d1).format('YYYY-MM-DD').toString();
+      d2 = moment(d2).format('YYYY-MM-DD').toString();
     }
-  })
+    let query = "SELECT distinct (convert(ve.view_datetime,datetime)) as ts ,ve.view_date view_date,vr.vehicle_no as HostID,ve.event"
+      + " FROM vuscreen_events ve"
+      + " LEFT JOIN vuscreen_registration vr ON ve.device_id = vr.device_id"
+      + " WHERE ve.sync_date >= '" + d2 + "' AND ve.sync_date <= '" + d1 + "' AND ve.user = 'server'"
+      + " AND ve.event NOT IN ('start', 'download', 'stop', 'delete') AND (ve.event NOT LIKE 'charging%' AND  ve.event NOT LIKE 'App%' AND  ve.event NOT LIKE 'download%' AND  ve.event NOT LIKE 'Json%')"
+      + " AND vr.vehicle_no != '' " + filter
+      + " GROUP BY ve.view_datetime, vr.vehicle_no, ve.event ORDER BY ve.sync_datetime"
+    db.get().query(query, function (error, dataArray) {
+      if (error) {
+        console.log(error)
+      } else {
+        let finalArr = []
+        let tHost = [];
+        let dataObj = {
+          view_date: null, HostID: null, cycle: null, wifiLogin: null, start_date: null, start_time: null, start_battery: null,
+          stop_date: null, stop_time: null, stop_battery: null, start_stop_duration: null, battery_consumed: null
+        }
+        if (dataArray.length > 0) {
+          let deviceMap = new Map();
+          for (let i = 0; i < dataArray.length; i++) {
+            const element = dataArray[i];
+            try {
+              let eventType = element.event.split("|")[0]
+              let batteryPer = element.event.split(":")[1].split("%")[0]
+              let wifiLogin = element.event.split("% |")[1]
+              if (dataObj.view_date == null) {
+                if (eventType.trim() == "start") {
+                  dataObj.view_date = element.view_date
+                  dataObj.HostID = element.HostID;
+                  var startDate = element.ts
+                  dataObj.start_date = element.ts.split(" ")[0]
+                  dataObj.start_time = element.ts.split(" ")[1]
+                  dataObj.start_battery = batteryPer + "%"
+                  dataObj.wifiLogin = wifiLogin
+                }
+              } else {
+                if (dataObj.HostID == element.HostID && eventType.trim() != "start") {
+                  if (wifiLogin != 0) {
+                    let endDate = element.ts
+                    dataObj.stop_date = element.ts.split(" ")[0]
+                    dataObj.stop_time = element.ts.split(" ")[1]
+                    dataObj.stop_battery = batteryPer + "%"
+                    dataObj.wifiLogin = wifiLogin
+                    if (deviceMap.has(element.view_date + '_' + element.HostID)) {
+                      let value = deviceMap.get(element.view_date + '_' + element.HostID)
+                      dataObj.cycle = value + 1
+                      deviceMap.set(element.view_date + '_' + element.HostID, value + 1)
+                    } else {
+                      deviceMap.set(element.view_date + '_' + element.HostID, 1)
+                      dataObj.cycle = 1
+                    }
+                    tHost.push(element.HostID)
+                    // need to cal time duration & battery consumed
+                    let difference = diff_minutes(new Date(startDate), new Date(endDate))
+                    dataObj.start_stop_duration = difference
+                    let battery_consumed = dataObj.start_battery.replace("%", "") - dataObj.stop_battery.replace("%", "")
+                    dataObj.battery_consumed = battery_consumed + "%"
+                    finalArr.push(dataObj)
+                    dataObj = {
+                      view_date: null, HostID: null, cycle: null, wifiLogin: null, start_date: null, start_time: null, start_battery: null,
+                      stop_date: null, stop_time: null, stop_battery: null, start_stop_duration: null, battery_consumed: null
+                    }
+                  }
+                  else{
+                    dataObj = {
+                      view_date: null, HostID: null, cycle: null, wifiLogin: null, start_date: null, start_time: null, start_battery: null,
+                      stop_date: null, stop_time: null, stop_battery: null, start_stop_duration: null, battery_consumed: null
+                    }
+                  }
+                } else if (eventType.trim() == "start") {
+                  // dataObj.stop_date = 0
+                  // dataObj.stop_time = 0
+                  // dataObj.stop_battery = 0 + "%"
+                  // dataObj.wifiLogin = 0
+                  // dataObj.start_stop_duration = 0
+                  // dataObj.battery_consumed = 0 + "%"
+                  // finalArr.push(dataObj)
+                  // dataObj = {
+                  //   view_date: null, HostID: null, cycle: null, wifiLogin: null, start_date: null, start_time: null, start_battery: null,
+                  //   stop_date: null, stop_time: null, stop_battery: null, start_stop_duration: null, battery_consumed: null
+                  // }
+                  dataObj.view_date = element.view_date
+                  dataObj.HostID = element.HostID;
+                  var startDate = element.ts
+                  dataObj.start_date = element.ts.split(" ")[0]
+                  dataObj.start_time = element.ts.split(" ")[1]
+                  dataObj.start_battery = batteryPer + "%"
+                  dataObj.wifiLogin = wifiLogin
+                  // if (deviceMap.has(element.view_date + '_' + element.HostID)) {
+                  //   let value = deviceMap.get(element.view_date + '_' + element.HostID)
+                  //   dataObj.cycle = value + 1
+                  //   deviceMap.set(element.view_date + '_' + element.HostID, value + 1)
+                  // } else {
+                  //   deviceMap.set(element.view_date + '_' + element.HostID, 1)
+                  //   dataObj.cycle = 1
+                  // }
+                }
+              }
+              if (i + 1 == dataArray.length) {
+                let fields = ["view_date", "HostID", "cycle", "wifiLogin", "start_date", "start_time", "start_battery", "stop_date", "stop_time", "stop_battery", "start_stop_duration", "battery_consumed"];
+                let csvDau = json2csv({ data: finalArr, fields: fields });
+                var array = []
+                array.push({ key: 'serversession', value: csvDau })
+                if (flag) {
+                  console.log("length of " + finalArr.length)
+                  let uniqueHost = _.uniq(tHost);
+                  resolve({ "data" : finalArr, "Host": uniqueHost.length})
+                } else {
+                  for (let i = 0; i < array.length; i++) {
+                    fs.writeFile(config.root + '/server/api/cron/' + array[i].key + '.csv', array[i].value, function (err) {
+                      if (err) {
+                        throw err;
+                      } else {
+                        console.log('file saved');
+                      }
+                    });
+                  }
+                  let destPath = "serversession_" + moment(new Date()).format('YYYY-MM-DD') + ".csv"
+                  fs.readFile(config.root + '/server/api/cron/serversession.csv', function (err, data) {
+                    if (err) throw err; // Something went wrong!
+                    s3Client.putObject({
+                      Bucket: s3_details.bucket,
+                      Key: destPath,
+                      ACL: 'public-read',
+                      Body: data
+                    }, function (err, data) {
+                      if (err) {
+                        console.log(err)
+                      } else {
+                        console.log("success")
+                        let url = "https://mobisign-bucket.s3.ap-south-1.amazonaws.com/Automated_Reports" + '/' + destPath
+                        setTimeout(function () {
+                          var html = "<html><head>"
+                          html += "<style>"
+                          html += "table {font-family: arial, sans-serif;border-collapse: collapse;width: 100%;}"
+                          html += "td, th {border: 1px solid #dddddd;text-align: left;padding: 8px;}"
+                          html += "tr:nth-child(even) {background-color: #dddddd;}</style></head>"
+                          html += "<h4>Dear Recipients,</h4>"
+                          html += "<h4>Please click below URL to open the report.</h4>"
+                          html += "<h4>" + url + "</h4>"
+                          html += "<br><h5>Thanks & Regards</h5><h5>Mobi Sign Pvt Ltd.</h5></html>"
+                          let subject = "Last 7 Server Sessions activity"
+                          // var email = 'deepak.kumar@mobisign.co.in,product@mobisign.co.in,monali.monalisa@mobisign.co.in,ashyin.thakral@mobisign.co.in,kedargdr@gmail.com,vishal.garg@mobisign.co.in'
+                          var email = 'kedargdr@gmail.com'
+                          EM.dispatchEmail(email, subject, html, "serversession", function (e) {
+                            console.log(e)
+                          })
+                        }, 10000)
+                      }
+                    });
+                  });
+                }
+              }
+            } catch (error) {
+              console.log(error)
+            }
+
+          }
+        } else {
+          resolve([])
+        }
+
+      }
+    })
+  });
+
 }
 
 function diff_minutes(dt2, dt1) {

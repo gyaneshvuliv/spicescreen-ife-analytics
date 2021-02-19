@@ -109,6 +109,7 @@ router.get('/play/bottomdata', controller.vuscreen_getplayData_Bottom);
 router.get('/read/bottomdata', controller.vuscreen_getreadData_Bottom); 
 router.get('/game/bottomdata', controller.vuscreen_getGameData_Bottom); 
 router.get('/fnb/bottomdata', controller.vuscreen_getfnbData_Bottom); 
+router.get('/get-ss', controller.get_ss);
 
 var morjob = new cronJob('00 05 12 * * *', function () {
     // var morjob = new cronJob('*/10 * * * * *', function(){

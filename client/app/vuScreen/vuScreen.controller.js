@@ -2826,16 +2826,53 @@ colorAdminApp.controller('serverSessionController', function ($scope, $rootScope
     var startdate = moment(d).format('YYYY-MM-DD').toString()
     var enddate = moment(d).format('YYYY-MM-DD').toString()
     $scope.showme = true;
-    $scope.create = function () {
-        $scope.showme = true;
-        var url = "/api/vuscreen/server-session?startDate=" + startdate + "&endDate=" + enddate
+    $scope.hostId = "";
+    $(".searchId").on('keyup', function (e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            // Do something
+            $scope.create($scope.hostId)
+        }
+    });
+    $scope.getSS = function () {
+        var url = "/api/vuscreen/get-ss?startDate=" + startdate + "&endDate=" + enddate
         $http.get(url)
             .then(function (response) {
                 if (response.data.length > 0) {
+                    $scope.ss = response.data[0].count
+                } else {
+                    console.log("No Data to Display")
+                }
+            });
+    }
+    $scope.getSS()
+    $scope.getWifiLogin = function () {
+        var url = "/api/vuscreen/event/bottomdata?startDate=" + startdate + "&endDate=" + enddate
+        $http.get(url)
+            .then(function (response) {
+                console.log(response.data)
+                if (response.data.length > 0) {
+                    $scope.totaluser = response.data[0].totaluser
+                } else {
+                    console.log("No Data to Display")
+                }
+            });
+    }
+    $scope.getWifiLogin()
+    $scope.create = function (hostId) {
+        $scope.showme = true;
+        var url = "/api/vuscreen/server-session?startDate=" + startdate + "&endDate=" + enddate + "&hostId=" + hostId
+        $http.get(url)
+            .then(function (response) {
+                if (response.data.data.length > 0) {
                     $scope.showme = false;
-                    $scope.serversession = response.data
+                    $scope.serversession = response.data.data
+                    $scope.Host = response.data.Host
+                    $scope.hostId = "";
                 } else {
                     alert("No Data to Display")
+                    $scope.serversession = []
+                    $scope.hostId = "";
+                    $scope.showme = false;
                 }
             });
     }
@@ -2851,8 +2888,8 @@ colorAdminApp.controller('serverSessionController', function ($scope, $rootScope
                 'This Month': [moment().startOf('month'), moment().endOf('month')],
                 'Last Month': [moment().subtract('month', 1).startOf('month'), moment().subtract('month', 1).endOf('month')]
             },
-            startDate: moment().subtract('days', 6),
-            endDate: moment()
+            startDate: moment().subtract(1, 'days'),
+            endDate: moment().subtract(1, 'days')
         },
         //Filter data by date selected
         function (start, end, dateSelector) {
@@ -2861,8 +2898,27 @@ colorAdminApp.controller('serverSessionController', function ($scope, $rootScope
             startdate = start.format('YYYY-MM-DD').toString();
             enddate = end.format('YYYY-MM-DD').toString();
             $scope.create();
+            $scope.getSS();
+            $scope.getWifiLogin();
         });
     $scope.create();
+    $scope.downloadFile = function (data, filename = 'serverSession') {
+        let csvData = ConvertToCSV(data, ['view_date', 'HostID', 'cycle', 'wifiLogin', 'start_date', 'start_time', 
+        'stop_date', 'stop_time', 'start_battery', 'stop_battery', 'start_stop_duration', 'battery_consumed']);
+        let blob = new Blob(['\ufeff' + csvData], { type: 'text/csv;charset=utf-8;' });
+        let dwldLink = document.createElement("a");
+        let url = URL.createObjectURL(blob);
+        let isSafariBrowser = navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1;
+        if (isSafariBrowser) {  //if Safari open in new window to save file with random filename.
+            dwldLink.setAttribute("target", "_blank");
+        }
+        dwldLink.setAttribute("href", url);
+        dwldLink.setAttribute("download", filename + ".csv");
+        dwldLink.style.visibility = "hidden";
+        document.body.appendChild(dwldLink);
+        dwldLink.click();
+        document.body.removeChild(dwldLink);
+    }
 })
 
 
