@@ -27,7 +27,10 @@ var tracking_Pagination = function (req, cb) {
     + " f_type,"
     + " air_craft_type,"
     + " ftime,"
-    + " sync_datetime"
+    + " sync_datetime,"
+    + " arrival_time,"
+    + " departure_time,"
+    + " tail_number"
     + " from"
     + " vuscreen_ife_data where date>='" + startDate + "' AND date<='" + endDate + "'" + filter
     + " order by id desc"
@@ -59,8 +62,8 @@ exports.tracking_Bottom = function (req, res) {
 };
 //export csv function for  tracking logs
 exports.tracking_export_csv = function (req, res) {
-  var fields = ["name", "mobile_no", "date", "base_station", "source", "destination", "f_no", "host1", "host2", "remote", "f_type", "ftime","sync_datetime"];
-  var fieldversions = ["name", "mobile_no", "date", "base_station", "source", "destination", "f_no", "host1", "host2", "remote", "f_type", "ftime","sync_datetime"];
+  var fields = ["name", "mobile_no", "date", "base_station", "source", "destination", "f_no", "host1", "host2", "remote", "f_type", "sync_datetime","departure_time", "arrival_time", "tail_number"];
+  var fieldversions = ["name", "mobile_no", "date", "base_station", "source", "destination", "f_no", "host1", "host2", "remote", "f_type", "sync_datetime","departure_time", "arrival_time", "tail_number"];
 
   var name = 'flight_tracking' + (moment(new Date()).format('YYYY-MM-DD')).toString()
   res.setHeader('Content-Type', 'text/csv');
