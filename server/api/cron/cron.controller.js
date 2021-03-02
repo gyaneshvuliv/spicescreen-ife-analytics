@@ -512,7 +512,7 @@ exports.serverSessionCron = async function (req, flag) {
       + " WHERE ve.sync_date >= '" + d2 + "' AND ve.sync_date <= '" + d1 + "' AND ve.user = 'server'"
       + " AND ve.event NOT IN ('start', 'download', 'stop', 'delete') AND (ve.event NOT LIKE 'charging%' AND  ve.event NOT LIKE 'App%' AND  ve.event NOT LIKE 'download%' AND  ve.event NOT LIKE 'Json%' and ve.event NOT LIKE '%VERIFY-IFE%')"
       + " AND vr.vehicle_no != '' " + filter
-      + " GROUP BY ve.view_datetime, vr.vehicle_no, ve.event,ve.journey_id ORDER BY ve.sync_datetime,event"
+      + " GROUP BY ve.view_datetime, vr.vehicle_no, ve.event ORDER BY ve.sync_datetime"
     db.get().query(query, function (error, dataArray) {
       if (error) {
         console.log(error)
